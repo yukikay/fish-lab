@@ -1,0 +1,76 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat&display=swap");
+* {
+  font-family: "Montserrat", sans-serif;
+}
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+}
+
+.h-10 {
+  height: 10% !important;
+}
+.h-90 {
+  height: 90% !important;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3490dc;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-card {
+  border-radius: 0.5rem;
+  /* width: 20rem; */
+  height: 10rem;
+}
+
+.admin-card-img {
+  /* left: 12rem; */
+  left: 60%;
+  width: 10rem;
+  z-index: -1;
+  position: absolute;
+}
+
+.admin-card-text {
+  top: 4rem;
+  left: 1rem;
+  position: relative;
+}
+
+.text-dark {
+  color: #000;
+}
+
+.profile-card {
+  min-height: 25rem !important;
+  min-width: 22.5% !important;
+}
+
+.profile-image {
+  min-height: 10rem !important;
+  width: 10rem !important;
+  border-radius:  50% !important;
+}

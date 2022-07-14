@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Staff Account</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="padding-right: 2rem; padding-left:2rem;">
+        <a class="navbar-brand" href="../admin_index.html">Fish Lab Industries</a>
+        
+        <div class="w-100 d-flex justify-content-end">
+           
+            <div class="row">
+                <div class="col">
+                    <a href="../index.html" class="btn btn-primary btn-sm" style="width: 6rem;">Main Site</i></a>
+                </div>
+                <div class="col">
+                    <a href="#" id="logout" class="btn btn-secondary btn-sm">Logout</i></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Create Staff Account</h2>
+        <div class="mt-4">
+            <form id="form">
+                <input id="username_field" type="text" name="username" class="form-control" placeholder="Username">
+                <span id="username_err" class="d-none" style="color:red;">Username Field Cannot be empty!</span>
+    
+                <input id="first_name_field" type="text" name="first_name" class="form-control mt-2" placeholder="First Name">
+                <span id="first_name_err" class="d-none" style="color:red;">First Name Field Cannot be empty!</span>
+    
+                <input id="last_name_field" type="text" name="last_name" class="form-control mt-2" placeholder="Last Name">
+                <span id="last_name_err" class="d-none" style="color:red;">Last Name Field Cannot be empty!</span>
+    
+                <input id="email_field" type="email" name="email" class="form-control mt-2" placeholder="Email">
+                <span id="email_err" class="d-none" style="color:red;">Email Field Cannot be empty!</span>
+    
+                <input id="password_field" type="password" name="password" class="form-control mt-2" placeholder="Password">
+                <span id="password_err" class="d-none" style="color:red;">Password Field cannot be empty!</span>
+    
+                <span id="general_err" class="d-none" style="color: red;">Oops.. Something went wrong, please try again later.</span>
+                <button id="register-btn" class="btn btn-success form-control mt-2">
+                    Register Account
+                </button>
+                <div id="loading-indicator" class="d-flex justify-content-center d-none" style="margin-top: 1.75rem;">
+                    <div class="loader"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.9/dist/sweetalert2.all.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="../index.js"></script>
+<script>
+    ensure_logged_in({redirect: '../index.html'});
+    check_admin_or_staff({redirect: '../index.html'});
+
+    document.addEventListener("DOMContentLoaded", function() {
+        let form = document.getElementById('form');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let username = document.getElementById('username_field');
+            let email = document.getElementById('email_field');
+            let password = document.getElementById('password_field');
+            let first_name = document.getElementById('first_name_field');
+            let last_name = document.getElementById('last_name_field');
+            
+            let email_err = document.getElementById('email_err');
+            let password_err = document.getElementById('password_err');
+            let first_name_err = document.getElementById('first_name_err');
+            let last_name_err = document.getElementById('last_name_err');
+            let username_err = document.getElementById('username_err');
+            
+            username_err.innerHTML = password_err.innerHTML = first_name_err.innerHTML = last_name_err.innerHTML = email_err.innerHTML = '';
+            
+            if(username.value == '') {
+                username_err.innerHTML = 'Username Field Cannot be empty!';
+                username_err.classList.remove('d-none');
+                return;
+            }
+
+            if(first_name.value == '') {
+                first_name_err.innerHTML = 'First Name Field Cannot be empty!';
+                first_name_err.classList.remove('d-none');
+                return;
+            }
+
+            if(last_name.value == '') {
+                last_name_err.innerHTML = 'Last Name Field Cannot be empty!';
+                last_name_err.classList.remove('d-none');
+                return;
+            }
+
+            if(email.value == '') {
+                email_err.innerHTML = 'Email Field Cannot be empty!';
+                email_err.classList.remove('d-none');
+                return;
+            }
+
+            
+            if(password.value == '') {
+                password_err.innerHTML = 'Password Field cannot be empty!';
+                password_err.classList.remove('d-none');
+                return;
+            }
+            
+            if(password.value.length < 6) {
+                password_err.innerHTML = 'Password should be longer than 6 characters!';
+                password_err.classList.remove('d-none');
+                return;
+            }
+
+            email_err.classList.add('d-none');
+            password_err.classList.add('d-none');
+            first_name_err.classList.add('d-none');
+            last_name_err.classList.add('d-none');
+            username_err.classList.add('d-none');
+
+            let spinner = document.getElementById('loading-indicator');
+            spinner.classList.remove('d-none');
+
+            let register_btn = document.getElementById('register-btn');
+            register_btn.classList.add('d-none');
+
+            jQuery.ajax({
+                method: 'POST',
+                dataType: 'json',
+                url: `${API_URL}/api/staff/create/`,
+                data: {
+                    "email" : email.value,
+                    "password":password.value,
+                    "first_name":first_name.value,
+                    "last_name":last_name.value,
+                    "username":username.value,
+                },
+                headers: {
+                    'Authorization':`Token ${window.localStorage.token}`
+                },
+                success: (res) => {
+                    set_success_message("Successfully Created Staff Account!");
+                    window.location.replace('./index.html');
+                },
+                error: (res) => {
+                    let err = res.responseJSON;
+
+                    if(err['username']) {
+                        username_err.innerHTML = err['username'];
+                        username_err.classList.remove('d-none');
+
+                        register_btn.classList.remove('d-none');
+                        spinner.classList.add('d-none');
+                        return ;
+                    }
+
+                    let general_err = document.getElementById('general_err');
+                    general_err.classList.remove('d-none');
+                    general_err.innerHTML = err.message;
+
+                    register_btn.classList.remove('d-none');
+                    spinner.classList.add('d-none');
+                }
+            });
+        });
+    });
+    
+</script>
+</html>

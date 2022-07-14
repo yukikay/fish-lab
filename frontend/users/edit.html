@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Account</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="padding-right: 2rem; padding-left:2rem;">
+        <a class="navbar-brand" href="../admin_index.html">Fish Lab Industries</a>
+        
+        <div class="w-100 d-flex justify-content-end">
+           
+            <div class="row">
+                <div class="col">
+                    <a href="../index.html" class="btn btn-primary btn-sm" style="width: 6rem;">Main Site</a>
+                </div>
+                <div class="col">
+                    <a href="#" id="logout" class="btn btn-secondary btn-sm">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2>Edit Account</h2>
+        <div class="mt-4">
+            <form id="form">
+                <div>
+                    <label for="username_field">Username</label>
+                    <input id="username_field" type="text" name="username" class="form-control" placeholder="Username" readonly>
+                    <span id="username_err" class="d-none" style="color:red;">Username Field Cannot be empty!</span>
+                </div>
+    
+                <div>
+                    <label for="first_name_field">First Name</label>
+                    <input id="first_name_field" type="text" name="first_name" class="form-control mt-2" placeholder="First Name">
+                    <span id="first_name_err" class="d-none" style="color:red;">First Name Field Cannot be empty!</span>
+                </div>
+    
+                <div>
+                    <label for="last_name_field">Last Name</label>
+                    <input id="last_name_field" type="text" name="last_name" class="form-control mt-2" placeholder="Last Name">
+                    <span id="last_name_err" class="d-none" style="color:red;">Last Name Field Cannot be empty!</span>
+                </div>
+    
+                <div>
+                    <label for="email_field">Email</label>
+                    <input id="email_field" type="email" name="email" class="form-control mt-2" placeholder="Email" readonly>
+                    <span id="email_err" class="d-none" style="color:red;">Email Field Cannot be empty!</span>
+                </div>
+
+                <div class="mt-2">
+                    <label for="group-select">Group/Role</label>
+                    <select name="groups" id="group-select" class="form-control"></select>
+                </div>
+    
+                <span id="general_err" class="d-none" style="color: red;"></span>
+                <button id="edit-btn" class="btn btn-success form-control mt-2">
+                    Edit Account
+                </button>
+                <div id="loading-indicator" class="d-flex justify-content-center d-none" style="margin-top: 1.75rem;">
+                    <div class="loader"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.9/dist/sweetalert2.all.min.js"></script>
+<script src="../index.js"></script>
+<script>
+    ensure_logged_in({ redirect: '../index.html' });
+
+    check_admin_or_staff({ redirect: '../index.html' });
+
+    let group_select = $('#group-select').select2({
+        placeholder: 'Select Group',
+        ajax: {
+            method: 'GET',
+            url: `${API_URL}/api/groups/`,
+            dataType: 'json',
+            headers: {
+                'Authorization' : `Token ${window.localStorage.token}`
+            },
+            data: function (params) {
+                var query = {
+                    text: params.term,
+                    type: 'public'
+                }
+
+                return query;
+            },
+            processResults: function (data) {
+                
+                result = $.map(data.data, function(e) {
+                    return {
+                        'id':e.id,
+                        'text':e.name,
+                    };
+                });
+
+
+                return {
+                    results: result,
+                }
+            },
+            error: function (res) {
+                setTimeout(function() {
+                    document.getElementsByClassName('select2-results__message')[0].innerHTML = res.responseJSON.message;
+                }, 100);
+            }
+        },
+        minimumResultsForSearch: Infinity,
+        allowClear: true
+    });
+
+    fetchInitialData();
+
+    function fetchInitialData() {
+        $.ajax({
+            url: `${API_URL}/api/user/${window.localStorage.to_edit}`,
+            method: 'GET',
+            dataType: 'json',
+            headers: {
+                'Authorization':`Token ${window.localStorage.token}`
+            },
+            success: (res) => {
+
+                let username = document.getElementById('username_field');
+                username.value = res.username;
+
+                let first_name = document.getElementById('first_name_field');
+                first_name.value = res.first_name;
+
+                let last_name = document.getElementById('last_name_field');
+                last_name.value = res.last_name;
+
+                let email = document.getElementById('email_field');
+                email.value = res.email;
+
+                $.ajax({
+                    url: `${API_URL}/api/group/${res.groups[0]}`,
+                    method: 'GET',
+                    dataType: 'json',
+                    headers: {
+                        'Authorization' : `Token ${window.localStorage.token}`
+                    },
+                    success: (res) => {
+                        let option = new Option(res.name, res.id, true, true);
+
+                        group_select.append(option).trigger('change');
+
+                        group_select.trigger({
+                            type: 'select2:select',
+                            params: {
+                                data: res,
+                            }
+                        });
+                    }
+                });
+            },
+            error: (res) => {
+            },
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        let form = document.getElementById('form');
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let username = document.getElementById('username_field');
+            let email = document.getElementById('email_field');
+            let first_name = document.getElementById('first_name_field');
+            let last_name = document.getElementById('last_name_field');
+
+            let email_err = document.getElementById('email_err');
+            let first_name_err = document.getElementById('first_name_err');
+            let last_name_err = document.getElementById('last_name_err');
+            let username_err = document.getElementById('username_err');
+
+            let group = document.getElementById('group-select');
+
+            username_err.innerHTML = first_name_err.innerHTML = last_name_err.innerHTML = email_err.innerHTML = '';
+            
+            if(username.value == '') {
+                username_err.innerHTML = 'Username Field Cannot be empty!';
+                username_err.classList.remove('d-none');
+            }
+
+            if(first_name.value == '') {
+                first_name_err.innerHTML = 'First Name Field Cannot be empty!';
+                first_name_err.classList.remove('d-none');
+                return;
+            }
+
+            if(last_name.value == '') {
+                last_name_err.innerHTML = 'Last Name Field Cannot be empty!';
+                last_name_err.classList.remove('d-none');
+                return;
+            }
+
+            if(email.value == '') {
+                email_err.innerHTML = 'Email Field Cannot be empty!';
+                email_err.classList.remove('d-none');
+                return;
+            }
+
+            email_err.classList.add('d-none');
+            first_name_err.classList.add('d-none');
+            last_name_err.classList.add('d-none');
+            username_err.classList.add('d-none');
+
+            let spinner = document.getElementById('loading-indicator');
+            spinner.classList.remove('d-none');
+
+            let edit_btn = document.getElementById('edit-btn');
+            edit_btn.classList.add('d-none');
+
+            let data = {
+                "email" : email.value,
+                "first_name":first_name.value,
+                "last_name":last_name.value,
+                "username":username.value,
+            }
+
+            if(group.value != ''){
+                data.groups = group.value;
+            }
+
+            $.ajax({
+                method: 'POST',
+                dataType: 'json',
+                url: `${API_URL}/api/user/${window.localStorage.to_edit}/edit`,
+                data: data,
+                headers: {
+                    'Authorization':`Token ${window.localStorage.token}`
+                },
+                success: (res) => {
+                    set_success_message("Successfully Edit Account!");
+                    window.localStorage.removeItem('to_edit');
+                    window.location.replace('./index.html');
+                },
+                error: (res) => {
+                    let err = res.responseJSON;
+
+                    if(err['username']) {
+                        username_err.innerHTML = err['username'];
+                        username_err.classList.remove('d-none');
+
+                        edit_btn.classList.remove('d-none');
+                        spinner.classList.add('d-none');
+                        return ;
+                    }
+
+                    let general_err = document.getElementById('general_err');
+                    general_err.innerHTML = err.message;
+                    general_err.classList.remove('d-none');
+
+                    edit_btn.classList.remove('d-none');
+                    spinner.classList.add('d-none');
+                }
+            });
+        });
+    });
+    
+</script>
+</html>

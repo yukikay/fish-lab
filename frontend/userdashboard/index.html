@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="http://cdn.datatables.net/1.11.3/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="../style.css">
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="padding-right: 2rem; padding-left:2rem;">
+        <a class="navbar-brand" href="../admin_index.html">Fish Lab Industries</a>
+        
+        <div class="w-100 d-flex justify-content-end">
+           
+            <div class="row">
+                <div class="col">
+                    <a href="../index.html" class="btn btn-primary btn-sm" style="width: 6rem;">Main Site</a>
+                </div>
+                <div class="col">
+                    <a href="#" id="logout" class="btn btn-secondary btn-sm">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div id="message-notification" class="alert d-none p-2"></div>
+        <h1>Fishes</h1>
+
+        <div class="row mt-2 d-flex justify-content-end">
+            <div class="col-4 d-flex justify-content-end">
+                <a href="./create.html" class="btn btn-sm btn-success">Add Fishes</a>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <table id="fish-table" class="cell-border compact stripe">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <td>fish name</td>
+                        <td>price</td>
+                        <td>fishfamily</td>
+                        <td>image</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <span id="general_err" class="d-none" style="color:red;"></span>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.9/dist/sweetalert2.all.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script src="../index.js"></script>
+
+<script>
+    if(!logged_in()) {
+        window.location.replace('../index.html');
+    }
+
+    $.ajax({
+        url: `${API_URL}/api/user-group/`,
+        method: 'GET',
+        dataType: 'json',
+        headers: {
+            'Authorization' : `Token ${window.localStorage.token}`
+        },
+        success: (res) => {
+
+            if(res.is_admin || res.group == 'staff') {
+                return;
+            }
+
+            window.location.replace('../index.html');
+        },
+        error: (res) => {
+            window.location.replace('../index.html');
+        }
+    });
+
+    if(window.localStorage.success_message) {
+        showMessageNotification(window.localStorage.success_message, "success");
+        window.localStorage.removeItem('success_message');
+    }
+
+    if(window.localStorage.error_message) {
+        showMessageNotification(window.localStorage.error_message);
+        window.localStorage.removeItem('success_message');
+    }
+    let table;
+    $(document).ready(function() {
+
+        table = $('#fish-table').DataTable({
+            'columns': [
+                { "data": "id" },
+                { "data": "fishname" },
+                { "data": "price"},
+                { "data": "fishfamily"},
+                { "data": "image",
+                    render: function (data, type, row, meta) {
+                        return "<img src='images"+ data + "' />";
+                }
+                },
+                {
+                    "defaultContent": "<button class='btn btn-warning btn-sm'>Edit</button>",
+                    "className" : "edit-btn",
+                    "orderable" : false
+                },
+                {
+                    "defaultContent": "<button class='btn btn-danger btn-sm'>Delete</button>",
+                    "className": "delete-btn",
+                    "orderable" : false
+                }
+            ],
+
+            'ajax' : {
+                'url': `${API_URL}/api/fishes/`,
+                'type': 'GET',
+                'dataSrc': "data",
+                'beforeSend': function (request) {
+                    request.setRequestHeader("Authorization", `Token ${window.localStorage.token}`);
+                },
+                'error': function(xhr, textStatus, error) {
+                    showMessageNotification(xhr.responseJSON.message ?? 'You are not authorized for this action.', "error");
+                }
+            }
+        });
+
+        $('#fish-table').on('click', 'td.edit-btn', function (e) {
+            e.preventDefault();
+            let data = table.row($(this).closest('tr')).data();
+            window.localStorage.setItem('to_edit', data.id);
+            window.location.replace('./edit.html');
+        });
+
+        $('#fish-table').on('click', 'td.delete-btn', function (e){
+            e.preventDefault();
+            Swal.fire({
+                titleText: 'Confirm Delete fish?',
+                allowOutsideClick: false,
+                confirmButtonColor: 'red',
+                confirmButtonText: 'Delete',
+                showCancelButton: true,
+                reverseButtons: true
+            }).then(
+                (res) => {
+                    if(res.isConfirmed) {
+                        let data = table.row($(this).closest('tr')).data();
+                        $.ajax({
+                            method: 'DELETE',
+                            url: `${API_URL}/api/fish/delete/${data.id}`,
+                            dataType: 'json',
+                            headers: {
+                                'Authorization': `Token ${window.localStorage.token}`
+                            },
+                            success: (res) => {
+                                table.row($(this).closest('tr')).remove().draw();
+                                showMessageNotification(res.message, "success");
+                            },
+                            error: (res) => {
+                                Swal.fire({
+                                    icon: 'error',
+                                    text: res.responseJSON.message,
+                                    confirmButtonColor: 'green'
+                                });
+                            }
+                        });
+                    }
+                }
+            );
+        });
+    });
+
+</script>
+</html>

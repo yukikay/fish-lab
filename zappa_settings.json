@@ -1,0 +1,12 @@
+{
+    "dev": {
+        "aws_region": "us-east-1",
+        "django_settings": "ddac_project.settings",
+        "profile_name": "lambda",
+        "project_name": "ddac-assignment",
+        "runtime": "python3.8",
+        "s3_bucket": "zappa-pp5avcfpe",
+        "cors": true,
+        "xray_tracing": true
+    }
+}

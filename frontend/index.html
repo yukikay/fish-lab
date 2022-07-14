@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Labs Industries</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        
+        <div id="login-btn" class="d-none">
+            <a href="./auth/login.html">Login</a>
+        </div>
+                <ul>
+                     for sku in new_skus
+					<li>
+						<a href="{% url 'goods:detail' sku.id %}"><img src="{{ sku.image.url }}"></a>
+						<h4><a href="{% url 'goods:detail' sku.id %}">{{ sku.name }}</a></h4>
+						<div class="prize">￥{{ sku.price }}</div>
+					</li>
+                     endfor
+				</ul>
+
+        <div id="profile-btn" class="d-none">
+            <a href="./profile/index.html">Profile</a>
+        </div>
+
+        <div id="fish-btn" class="d-none">
+            <a href="./userdashboard/index.html">fishes</a>
+        </div>
+
+        <div id="admin-btn" class="d-none">
+            <a href="./admin_index.html">Admin Dashboard</a>
+        </div>
+
+        <div id="logout-btn" class="d-none">
+            <a href="#" id="logout">Logout</a>
+        </div>
+
+        <div id="general_err" class="alert alert-danger p-2 d-none">
+        </div>
+    </div>
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="./index.js"></script>
+<script>
+
+    if(window.localStorage.error_message) {
+        let gen_err = document.getElementById('general_err');
+        gen_err.classList.remove('d-none');
+        gen_err.innerHTML = window.localStorage.error_message;
+        window.localStorage.removeItem('error_message');
+    }
+
+    let login_btn = document.getElementById('login-btn');
+    let profile_btn = document.getElementById('profile-btn');
+    let fish_btn = document.getElementById('fish-btn');
+    let logout_btn = document.getElementById('logout-btn');
+
+    if(logged_in()) {
+        login_btn.classList.add('d-none');
+        profile_btn.classList.remove('d-none');
+        fish_btn.classList.remove('d-none');
+        logout_btn.classList.remove('d-none');
+
+        $.ajax({
+            url: `${API_URL}/api/user-group/`,
+            method: 'GET',
+            dataType: 'json',
+            headers: {
+                'Authorization' : `Token ${window.localStorage.token}`
+            },
+        }).then((res) => {
+            if(res.is_admin || res.group == 'staff') {
+                let admin_btn = document.getElementById('admin-btn');
+                admin_btn.classList.remove('d-none');
+            }
+        });
+
+
+    } else {
+        login_btn.classList.remove('d-none');
+        profile_btn.classList.add('d-none');
+        logout_btn.classList.add('d-none');
+        fish_btn.classList.add('d-none');
+    }
+
+</script>
+</html>
